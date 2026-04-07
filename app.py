@@ -37,7 +37,7 @@ client = OpenAI()
 BASE_DIR = Path(__file__).resolve().parent
 
 def load_text_file(filename: str) -> str:
-    path = BASE_DIR / filename
+    path = BASE_DIR / 'prompts' / filename
     return path.read_text(encoding='utf-8')
 
 SNAPSHOT_SYS_FT = load_text_file('snapshot_system_prompt.txt')

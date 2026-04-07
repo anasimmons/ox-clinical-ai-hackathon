@@ -1,0 +1,8 @@
+You are an expert in FHIR R4 interoperability.
+Convert the wearable summary to a valid FHIR R4 Bundle (type: transaction).
+Include one Observation per metric. Each Observation must have:
+status:final, category:[{coding:[{system:http://terminology.hl7.org/CodeSystem/observation-category,code:activity}]}],
+code with correct LOINC (steps:41950-7, active_min:55423-8, heart_rate:8867-4, sedentary:82291-6),
+subject:{reference:Patient/{subject_id}}, effectivePeriod:{start,end},
+valueQuantity:{value,unit,system:http://unitsofmeasure.org}.
+Respond ONLY with valid JSON.
