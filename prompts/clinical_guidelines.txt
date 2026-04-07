@@ -1,11 +1,40 @@
-1. Parameter: Resting Heart Rate (RHR) Trend
-   - Relationship: An increasing RHR trend post-MI often indicates cardiovascular deconditioning or worsening heart failure.
-   - Rule: If RHR > 80 bpm or increases by >10 bpm over 1 week, trigger clinical review.
+1.⁠ ⁠Parameter: Resting Heart Rate (RHR) Trend
+   - Relationship: In cardiac rehabilitation, a resting heart rate above 80 bpm or a rise of more than 10 bpm within 7 days may indicate poor recovery or increased physiological strain.
+   - Rule: If resting_hr_bpm > 80 OR resting_hr_change_7d > 10, trigger clinical review.
 
-2. Parameter: Step Count vs. Sedentary Time Ratio
-   - Relationship: Low step counts (<5000) combined with high sedentary time (>9 hours) are associated with higher all-cause mortality in cardiac rehab patients.
-   - Rule: If steps < 5000 AND sedentary > 540 min, recommend physiotherapist intervention.
+2.⁠ ⁠Parameter: Step Count Floor
+   - Relationship: Mean daily step count below 5,000 is considered sub-optimal in cardiac rehabilitation, while persistently very low step counts are associated with higher cardiovascular risk.
+   - Rule: If mean_daily_steps < 5000, classify as activity concern and review rehabilitation progress.
+   - Escalation: If mean_daily_steps <= 3000, classify as RED risk due to very low activity phenotype.
 
-3. Red Flags:
-   - Heart rate > 120 bpm during light activity.
-   - Sudden drop in daily step count (>50% decrease).
+3.⁠ ⁠Parameter: Sedentary Burden
+   - Relationship: Sedentary time above 540 minutes (9 hours) per day is a risk signal, especially when paired with low activity.
+   - Rule: If sedentary_minutes_per_day > 540, flag sedentary risk.
+   - Escalation: If mean_daily_steps < 5000 AND sedentary_minutes_per_day > 540, recommend physiotherapist or rehab intervention.
+
+4.⁠ ⁠Parameter: Acute Change in Activity
+   - Relationship: A sudden fall in activity may indicate clinical deterioration, reduced exercise tolerance, or worsening recovery.
+   - Rule: If daily_step_change_pct <= -50, trigger urgent clinical alert.
+
+5.⁠ ⁠Parameter: Heart Rate During Light Activity
+   - Relationship: Heart rate above 120 bpm during light activity is an abnormal exertional response and should prompt urgent review.
+   - Rule: If heart_rate_light_activity_bpm > 120, trigger urgent clinical alert.
+
+6.⁠ ⁠Parameter: Step-Based Cardiovascular Risk Zone
+   - Relationship: Step count shows a dose-response association with cardiovascular risk; higher step counts are generally associated with better cardiovascular protection.
+   - Rule:
+       * RED: mean_daily_steps <= 3000, or persistently < 4000 with low activity pattern
+       * AMBER: mean_daily_steps 4000-6999, or improving but still below protective range
+       * GREEN: mean_daily_steps 7000-9000 consistently
+
+7.⁠ ⁠Parameter: Cadence / Walking Intensity
+   - Relationship: Higher walking cadence adds cardiovascular benefit beyond total step count, while low cadence may indicate suboptimal exercise intensity.
+   - Rule:
+       * If cadence_steps_per_min >= 100 during walking bouts, record beneficial moderate-intensity activity
+       * If mean_daily_steps are adequate but cadence remains low, classify as AMBER rather than GREEN
+
+8.⁠ ⁠Parameter: Longitudinal Behaviour Pattern
+   - Relationship: Lack of improvement over time despite monitoring suggests persistent high-risk inactivity, whereas sustained improvement supports recovery.
+   - Rule:
+       * If no improvement in steps over repeated monitoring and activity remains low, escalate risk category
+       * If steps improve by approximately 500-1000/day over time, record meaningful positive change
