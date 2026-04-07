@@ -1,0 +1,8 @@
+python-dotenv
+openai
+fhir.resources
+pandas
+numpy
+matplotlib
+actipy
+ipywidgets
