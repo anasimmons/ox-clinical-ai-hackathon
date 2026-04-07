@@ -6,3 +6,5 @@ numpy
 matplotlib
 actipy
 ipywidgets
+flask
+flask-cors

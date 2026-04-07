@@ -1,0 +1,11 @@
+1. Parameter: Resting Heart Rate (RHR) Trend
+   - Relationship: An increasing RHR trend post-MI often indicates cardiovascular deconditioning or worsening heart failure.
+   - Rule: If RHR > 80 bpm or increases by >10 bpm over 1 week, trigger clinical review.
+
+2. Parameter: Step Count vs. Sedentary Time Ratio
+   - Relationship: Low step counts (<5000) combined with high sedentary time (>9 hours) are associated with higher all-cause mortality in cardiac rehab patients.
+   - Rule: If steps < 5000 AND sedentary > 540 min, recommend physiotherapist intervention.
+
+3. Red Flags:
+   - Heart rate > 120 bpm during light activity.
+   - Sudden drop in daily step count (>50% decrease).
