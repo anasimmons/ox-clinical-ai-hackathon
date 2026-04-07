@@ -1,0 +1,15 @@
+{
+  "subject_id": "PID-20394",
+  "name": "Mr David Chen",
+  "dob": "1968-04-15",
+  "device": "Axivity AX3",
+  "recording_start": "2023-06-08T12:21:04Z",
+  "recording_end": "2023-06-08T15:19:33Z",
+  "mean_daily_steps": 300,
+  "total_active_minutes": 15,
+  "mean_daily_sedentary_minutes": 900,
+  "mean_heart_rate_bpm": 72,
+  "resting_hr_bpm": 62,
+  "days_meeting_150min_activity_target": 0,
+  "clinical_context": "Cardiac rehabilitation post-MI, 6 weeks post-discharge"
+}
