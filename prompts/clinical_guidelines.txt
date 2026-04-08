@@ -172,3 +172,77 @@
      - ESC
      - WHO
      - Cardiac rehabilitation literature
+
+Trigger RED (urgent escalation) if ANY of:
+•⁠  ⁠Sustained HR > 130 bpm at rest (>30 min)
+•⁠  ⁠New or worsening symptoms (if available)
+•⁠  ⁠Rapid deterioration in activity + rising HR
+•⁠  ⁠Concerning physiological instability pattern--------------------------------------------------
+EXTENDED GUARDRAILS
+--------------------------------------------------
+
+[1] AF / TACHYARRHYTHMIA DETECTION
+IF:
+•⁠  ⁠Known history of atrial fibrillation
+AND
+•⁠  ⁠HR spike >130 bpm, especially overnight or at rest
+THEN:
+•⁠  ⁠Flag: "Possible AF episode"
+•⁠  ⁠Risk: AMBER (upgrade to RED if prolonged or symptomatic)
+•⁠  ⁠Action: Recommend rhythm review / ECG confirmation
+
+--------------------------------------------------
+
+[2] NON-WEAR / DATA QUALITY GUARDRAIL
+IF:
+•⁠  ⁠Non-wear time > 180 minutes/day (average)
+OR
+•⁠  ⁠Any single day > 300 minutes
+THEN:
+•⁠  ⁠Flag: "Data reliability concern"
+•⁠  ⁠Risk: AMBER
+•⁠  ⁠Action: Interpret trends cautiously; prompt adherence improvement
+
+--------------------------------------------------
+
+[3] RISING RESTING HEART RATE TREND
+IF:
+•⁠  ⁠Resting HR increases ≥5 bpm across the week
+OR
+•⁠  ⁠≥3 consecutive days of rising RHR
+THEN:
+•⁠  ⁠Flag: "Physiological deterioration signal"
+•⁠  ⁠Risk: AMBER → RED (if combined with low activity or symptoms)
+•⁠  ⁠Action: Consider clinical review (infection, deconditioning, HF risk)
+
+--------------------------------------------------
+
+[4] REHABILITATION PROGRESSION / ADHERENCE
+IF:
+•⁠  ⁠Week 1–2 AND low activity (steps <3000/day)
+OR
+•⁠  ⁠Missed ≥1 physiotherapy session
+THEN:
+•⁠  ⁠Flag: "Poor rehab engagement"
+•⁠  ⁠Risk: AMBER
+•⁠  ⁠Action: Behavioural + clinical follow-up
+
+IF:
+•⁠  ⁠Later phase (week ≥4) AND no upward trend in steps/activity
+THEN:
+•⁠  ⁠Flag: "Failure to progress"
+•⁠  ⁠Risk: AMBER
+
+--------------------------------------------------
+
+[5] PROTECTIVE / REASSURING PATTERN
+IF:
+•⁠  ⁠Stable or improving steps
+AND
+•⁠  ⁠Stable or decreasing resting HR
+AND
+•⁠  ⁠Good wear compliance
+THEN:
+•⁠  ⁠Flag: "Expected recovery trajectory"
+•⁠  ⁠Risk: GREEN
+•⁠  ⁠Action: Continue current plan

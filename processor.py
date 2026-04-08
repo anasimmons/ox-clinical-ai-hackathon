@@ -1,50 +1,27 @@
 """Wearable clinical data processing utilities."""
 
-import importlib.util
-import os
 import json
 from pathlib import Path
 
 from dotenv import load_dotenv
 from openai import OpenAI
 from fhir.resources.bundle import Bundle
+from challenge_data import PATIENTS, to_pipeline_format
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
-os.environ['JAVA_HOME'] = '/usr/local/opt/openjdk'
-os.environ['PATH'] = '/usr/local/opt/openjdk/bin:' + os.environ.get('PATH', '')
-
-# Import process_cwa_to_summary from data-processing.py (hyphen prevents normal import)
-_spec = importlib.util.spec_from_file_location("data_processing", BASE_DIR / "data_processing.py")
-_dp = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_dp)
-process_cwa_to_summary = _dp.process_cwa_to_summary
 
 client = OpenAI()
 
 SNAPSHOT_SYS_FT = (BASE_DIR / 'prompts' / 'snapshot_system_prompt.txt').read_text(encoding='utf-8')
 CLINICAL_GUIDELINES = (BASE_DIR / 'prompts' / 'clinical_guidelines.txt').read_text(encoding='utf-8')
-DEFAULT_PATIENT_FILE = BASE_DIR / 'patients' / 'default_patient.json'
 FHIR_SYSTEM = (BASE_DIR / 'prompts' / 'fhir_system.txt').read_text(encoding='utf-8')
 
-def load_default_patient(filename: str = 'PID-20394.json') -> dict:
-    path = BASE_DIR / 'patients' / filename
-    if not path.exists():
-        raise FileNotFoundError(f"Default patient file not found: {path}")
-    return json.loads(path.read_text(encoding='utf-8'))
 
-
-def process_wearable_file(file_path: str, subject_metadata: dict,
-                          heart_rate_bpm: int | None = None,
-                          resting_hr_bpm: int | None = None) -> dict:
-    """Process a .cwa/.gz wearable file and return a clinical summary dict."""
-    file_ext = Path(file_path).suffix.lower()
-    if file_ext not in ('.cwa', '.gz'):
-        raise ValueError(f"Unsupported file format: {file_ext}. Accepted: .cwa, .gz")
-    return process_cwa_to_summary(file_path, subject_metadata,
-                                  heart_rate_bpm=heart_rate_bpm,
-                                  resting_hr_bpm=resting_hr_bpm)
+def load_all_patients() -> list[dict]:
+    """Return all patients converted to the flat pipeline format."""
+    return [to_pipeline_format(p) for p in PATIENTS]
 
 
 def build_fhir_bundle(patient: dict) -> Bundle:

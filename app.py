@@ -1,12 +1,8 @@
 """
-Wearable Clinical Pipeline Backend
-Processes .cwa, .gz, and .csv wearable data files to generate clinical snapshots with FHIR validation.
+Wearable Clinical Pipeline — three-patient tabbed dashboard.
 """
 
-import os
 import re
-import tempfile
-import traceback
 from pathlib import Path
 
 from flask import Flask, request, jsonify
@@ -15,8 +11,7 @@ from flask_cors import CORS
 from processor import (
     build_fhir_bundle,
     generate_clinical_snapshot,
-    load_default_patient,
-    process_wearable_file as _process_wearable_file,
+    load_all_patients,
 )
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -88,9 +83,11 @@ def render_pipeline_output(patient: dict, snapshot_text: str, bundle=None) -> st
     low_activity = steps is not None and steps < 5000
     color = '#d9534f' if low_activity else '#0275d8'
 
-    rec_start = patient.get('recording_start', '')[:10]
-    rec_end   = patient.get('recording_end', '')[:10]
-    period    = rec_start if rec_start == rec_end else f'{rec_start} – {rec_end}'
+    rec_start     = patient.get('recording_start', '')[:10]
+    rec_end       = patient.get('recording_end', '')[:10]
+    wear_hours    = patient.get('wear_duration_hours')
+    period        = rec_start if rec_start == rec_end else f'{rec_start} – {rec_end}'
+    wear_str      = f'{wear_hours} hrs worn' if wear_hours is not None else ''
 
     # --- metrics grid ---
     metrics_html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0;">'
@@ -281,6 +278,10 @@ def render_pipeline_output(patient: dict, snapshot_text: str, bundle=None) -> st
                 <span>{period}</span>
             </div>
             <div class="patient-field">
+                <span>Wear Time</span>
+                <span>{wear_str if wear_str else '—'}</span>
+            </div>
+            <div class="patient-field">
                 <span>Clinical Context</span>
                 <span>{patient.get("clinical_context", "—")}</span>
             </div>
@@ -307,53 +308,141 @@ def render_pipeline_output(patient: dict, snapshot_text: str, bundle=None) -> st
 </html>'''
 
 
+def render_tabbed_dashboard(results: list) -> str:
+    """Render all patients in a tabbed HTML dashboard."""
+    tab_buttons = ''
+    tab_panels  = ''
+
+    for i, r in enumerate(results):
+        patient = r['patient']
+        name    = patient.get('name', f'Patient {i+1}')
+        short   = name.split()[-1]  # last name for the tab label
+        active  = 'active' if i == 0 else ''
+
+        tab_buttons += (
+            f'<button class="tab-btn {active}" onclick="showTab({i})" id="btn-{i}">'
+            f'<span style="font-size:0.8em;color:#718096;display:block;">Patient {i+1}</span>'
+            f'{short}'
+            f'</button>'
+        )
+
+        inner_html = render_pipeline_output(patient, r['snapshot'], r['bundle'])
+        # strip the outer html/head/body wrapper — keep only the .page div
+        body_match = re.search(r'<div class="page">(.*)</div>\s*</body>', inner_html, re.DOTALL)
+        inner_content = body_match.group(0) if body_match else inner_html
+
+        display = 'block' if i == 0 else 'none'
+        tab_panels += f'<div class="tab-panel" id="panel-{i}" style="display:{display};">{inner_content}</div>'
+
+    return f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oxford Clinical AI · Cardiac Rehab Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+            min-height: 100vh;
+            padding: 24px 16px;
+            line-height: 1.6;
+        }}
+        .dashboard-header {{
+            max-width: 960px;
+            margin: 0 auto 20px;
+            text-align: center;
+        }}
+        .dashboard-header h1 {{
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #1a365d;
+        }}
+        .dashboard-header p {{
+            color: #718096;
+            font-size: 0.9em;
+            margin-top: 4px;
+        }}
+        .tab-bar {{
+            max-width: 960px;
+            margin: 0 auto 16px;
+            display: flex;
+            gap: 8px;
+        }}
+        .tab-btn {{
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1em;
+            font-weight: 600;
+            color: #4a5568;
+            transition: all 0.15s;
+        }}
+        .tab-btn:hover {{ border-color: #90cdf4; background: #ebf8ff; }}
+        .tab-btn.active {{ border-color: #3182ce; background: #ebf8ff; color: #1a365d; }}
+        .tab-panel .page {{ max-width: 960px; margin: 0 auto; }}
+        .card {{
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }}
+        .header-title {{
+            font-size: 1.6em; font-weight: 700; color: #1a365d;
+            display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+        }}
+        .patient-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px; margin-top: 16px;
+        }}
+        .patient-field span:first-child {{
+            font-size: 0.75em; text-transform: uppercase;
+            letter-spacing: 0.05em; color: #718096; display: block;
+        }}
+        .patient-field span:last-child {{ font-weight: 600; color: #2d3748; }}
+        .section-title {{ font-size: 1.1em; font-weight: 600; color: #2d3748; margin-bottom: 4px; }}
+        .divider {{ border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }}
+        .footer {{ text-align: center; color: #a0aec0; font-size: 0.82em; padding-top: 8px; }}
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <h1>🏥 Oxford Cardiac Rehabilitation · Wearables Dashboard</h1>
+        <p>Demo Day · 8 April 2026 · FHIR R4 · GPT-4o-mini</p>
+    </div>
+    <div class="tab-bar">{tab_buttons}</div>
+    {tab_panels}
+    <script>
+        function showTab(idx) {{
+            document.querySelectorAll('.tab-panel').forEach((p, i) => p.style.display = i === idx ? 'block' : 'none');
+            document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+        }}
+    </script>
+</body>
+</html>'''
+
+
 @app.route('/', methods=['GET'])
 def index():
-    cwa_path = BASE_DIR / os.getenv('CWA_FILE', 'data/tiny-sample.cwa')
-    subject_metadata = load_default_patient(os.getenv('PATIENT_FILE', 'PID-20394.json'))
-    patient = _process_wearable_file(str(cwa_path), subject_metadata)
-    bundle = build_fhir_bundle(patient)
-    snapshot_text = generate_clinical_snapshot(patient, bundle)
-    return render_pipeline_output(patient, snapshot_text, bundle)
+    results = []
+    for patient in load_all_patients():
+        bundle   = build_fhir_bundle(patient)
+        snapshot = generate_clinical_snapshot(patient, bundle)
+        results.append({'patient': patient, 'bundle': bundle, 'snapshot': snapshot})
+    return render_tabbed_dashboard(results)
 
 
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({'status': 'ok', 'service': 'Wearable Clinical Pipeline'})
-
-
-@app.route('/process', methods=['POST'])
-def process_wearable_file():
-    try:
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file provided'}), 400
-
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-
-        file_ext = Path(file.filename).suffix.lower()
-        if file_ext not in ['.cwa', '.gz']:
-            return jsonify({'error': f'Unsupported file format: {file_ext}. Accepted: .cwa, .gz'}), 400
-
-        with tempfile.NamedTemporaryFile(suffix=file_ext, delete=False) as tmp:
-            file.save(tmp.name)
-            tmp_path = tmp.name
-
-        try:
-            subject_metadata = load_default_patient()
-            patient = _process_wearable_file(tmp_path, subject_metadata)
-            bundle = build_fhir_bundle(patient)
-            snapshot = generate_clinical_snapshot(patient, bundle)
-            return render_pipeline_output(patient, snapshot, bundle)
-        finally:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
-
-    except Exception as e:
-        error_trace = traceback.format_exc()
-        print(f"Error processing file: {error_trace}")
-        return jsonify({'error': str(e), 'traceback': error_trace}), 500
 
 
 @app.route('/snapshot', methods=['POST'])
@@ -362,7 +451,6 @@ def generate_snapshot_endpoint():
         patient = request.get_json()
         if not patient:
             return jsonify({'error': 'No patient data provided'}), 400
-
         snapshot = generate_clinical_snapshot(patient)
         return jsonify({'status': 'success', 'clinical_snapshot': snapshot}), 200
     except Exception as e:

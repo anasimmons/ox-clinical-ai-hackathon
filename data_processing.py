@@ -139,6 +139,7 @@ def process_cwa_to_summary(
         # --- recording window ---
         "recording_start": recording_start.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "recording_end":   recording_end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "wear_duration_hours": round(epoch_1min.notna().sum() / 60, 1),
 
         # --- activity metrics ---
         "mean_daily_steps":               mean_daily_steps,
