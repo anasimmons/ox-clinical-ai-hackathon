@@ -24,10 +24,60 @@ def load_all_patients() -> list[dict]:
     return [to_pipeline_format(p) for p in PATIENTS]
 
 
+# Physiological bounds: (min, max) — values outside these are data errors, not clinical signals
+_METRIC_BOUNDS = {
+    "mean_daily_steps":                   (0,      100_000),
+    "total_active_minutes":               (0,      1_440),
+    "mean_daily_sedentary_minutes":        (0,      1_440),
+    "mean_heart_rate_bpm":                (20,     300),
+    "resting_hr_bpm":                     (20,     200),
+    "days_meeting_150min_activity_target": (0,      7),
+    "wear_duration_hours":                (0,      168),   # max = 7 days
+}
+
+
+def validate_patient_metrics(patient: dict) -> dict:
+    """
+    Check each metric against physiological bounds.
+    - Impossible values (negative steps, HR of 0) raise ValueError.
+    - Values that exceed the plausible ceiling are clamped; a flag is recorded.
+    Returns a copy of the patient dict with clamped values and a '_flags' list.
+    """
+    cleaned = dict(patient)
+    flags = []
+
+    for field, (lo, hi) in _METRIC_BOUNDS.items():
+        value = cleaned.get(field)
+        if value is None:
+            continue
+
+        if value < lo:
+            raise ValueError(
+                f"[{patient.get('subject_id')}] '{field}' = {value} is below the "
+                f"physiological minimum of {lo}. This is likely a data error."
+            )
+
+        if value > hi:
+            flags.append({
+                "field":    field,
+                "original": value,
+                "clamped":  hi,
+                "message":  (
+                    f"{field.replace('_', ' ').title()} value of {value} "
+                    f"exceeds plausible maximum — clamped to {hi}"
+                ),
+            })
+            cleaned[field] = hi
+
+    cleaned["_flags"] = flags
+    return cleaned
+
+
 def build_fhir_bundle(patient: dict) -> Bundle:
     """
     Deterministically build a FHIR R4 Bundle from a patient metrics dict.
     Returns a fhir.resources Bundle object (no LLM involved).
+    Expects patient dict to have already been passed through validate_patient_metrics.
     """
     from fhir.resources.bundle import Bundle, BundleEntry
     from fhir.resources.observation import Observation
@@ -84,7 +134,9 @@ def build_fhir_bundle(patient: dict) -> Bundle:
             "request": {"method": "POST", "url": "Observation"},
         }))
 
-    return Bundle(**{"type": "transaction", "entry": entries})
+    bundle = Bundle(**{"type": "transaction", "entry": entries})
+    Bundle.model_validate(bundle.model_dump())
+    return bundle
 
 
 def generate_clinical_snapshot(patient: dict, bundle=None) -> str:

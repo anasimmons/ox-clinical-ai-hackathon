@@ -190,10 +190,6 @@ PATIENTS = [
 ]
 
 
-# ─── Optional helpers ───────────────────────────────────────────
-# These do not change the data — they just make it easier to access
-# from inside your notebook.
-
 def get_patient_by_name(name):
     """Return the first patient whose `name` field contains the given string."""
     for p in PATIENTS:
@@ -244,6 +240,7 @@ def to_pipeline_format(p: dict) -> dict:
         "days_meeting_150min_activity_target": days_meeting,
         "mean_heart_rate_bpm": mean_hr,
         "resting_hr_bpm":      metrics["heart_rate_resting_avg"],
+        "context_notes":       p.get("context_notes", ""),
     }
 
 

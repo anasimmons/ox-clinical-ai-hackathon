@@ -1,248 +1,135 @@
- 0.⁠ ⁠Patient Classification
-   - Determine whether the patient should be treated as a cardiac patient or a general population patient based on clinical history/context.
-   - Cardiac patient examples: CAD, HF, post-MI, cardiac rehabilitation, chronic cardiovascular disease.
-   - If cardiac history is present, use cardiac-specific thresholds.
-   - If no cardiac history is present, use general population thresholds.
-   - If classification is unclear, default to the more clinically cautious interpretation and flag for human review.
-
- 1.⁠ ⁠Parameter: Resting Heart Rate (RHR) Trend
-   - Relationship: In cardiac patients, an increasing RHR trend may indicate cardiovascular deconditioning, worsening heart failure, poor rate control, or emerging acute illness.
-   - Scope: Apply to adults only; use cardiac-specific thresholds for CAD / HF / post-MI patients and general thresholds for the general population.
-   - Cardiac patients:
-     - GREEN: AHR 60–100 bpm, RHR target 55–70 bpm, and stable or decreasing RHR trend.
-     - AMBER: RHR 40–60 bpm or 70–100 bpm if clinically explained, or mild upward trend over time.
-     - HIGH RISK: RHR ≥ 70 bpm in cardiac patients with persistent elevation, RHR increase ≥ 10 bpm over 7 days, or RHR ≤ 55 bpm suggesting possible overtreatment.
-     - RED: HR < 40 bpm or > 160 bpm, or sudden change ≥ 30 bpm within minutes.
-   - General population:
-     - GREEN: AHR 60–100 bpm, RHR 40–100 bpm, and stable or decreasing RHR trend.
-     - AMBER: Mildly abnormal RHR that may be explained by activity, stress, or illness.
-     - HIGH RISK: RHR increase ≥ 5 bpm over 5 years, or persistent resting tachycardia that is clinically concerning.
-     - RED: HR < 40 bpm or > 160 bpm, or sudden change ≥ 30 bpm within minutes.
+1.⁠ ⁠Parameter: Heart Rate (HR)
+   - Relationship: Heart rate reflects cardiovascular status, autonomic balance, and recovery in cardiac patients.
+   - GREEN:
+     - Average HR (AHR): 60–100 bpm
+     - Resting HR (RHR): 55–70 bpm (therapeutic target for CAD / HF)
+   - NOT IDEAL:
+     - Values outside optimal range but not immediately dangerous
+   - HIGH RISK:
+     - Bradycardia: 40–60 bpm
+     - Tachycardia: 100–160 bpm
+     - RHR ≥ 70 bpm → increased cardiovascular risk
+     - RHR increase ≥ 10 bpm over 7 days → adverse prognosis
+   - RED:
+     - HR < 40 bpm or > 160 bpm
+     - Sudden HR change ≥ 30 bpm within minutes
    - Interpretation:
-     - Increasing RHR trend: possible deconditioning, autonomic stress, worsening cardiovascular status, or inadequate recovery.
-     - Persistent RHR elevation in cardiac patients: consider clinical review and medication optimisation.
-     - Low RHR in cardiac patients: consider possible overtreatment if clinically relevant.
+     - Elevated or rising HR: possible deconditioning, worsening heart failure, or autonomic stress
    - Clinical action:
-     - If RHR ≥ 70 bpm in a cardiac patient, highlight increased cardiovascular risk.
-     - If RHR increases > 10 bpm over 7 days, trigger clinical review.
-     - If RED, escalate for urgent assessment.
+     - Persistent elevation or rising trend → clinical review
 
- 2.⁠ ⁠Parameter: Step Count
-   - Relationship: Low step count combined with reduced activity or increased sedentary time is associated with worse outcomes, especially in cardiac rehabilitation populations.
-   - Scope: Apply to adults only; use cardiac-specific thresholds for CAD / HF / post-MI patients and general thresholds for the general population.
-   - Cardiac patients:
-     - GREEN: ≥ 6,500 steps/day.
-     - AMBER: 3,000–6,500 steps/day.
-     - HIGH RISK: < 3,000 steps/day.
-     - RED: Approximately 300 steps/day, or sudden step-count decrease > 50% from baseline.
-   - General population:
-     - GREEN: ≥ 10,000 steps/day.
-     - AMBER: 5,000–7,000 steps/day.
-     - HIGH RISK: < 5,000 steps/day.
-     - RED: Approximately 300 steps/day, or sudden step-count decrease > 50% from baseline.
-   - Cadence and activity interpretation:
-     - Cadence ≥ 100 steps/min over 5 minutes suggests beneficial moderate-intensity activity.
-     - Highest cadence < 60 steps/min suggests lack of beneficial moderate-intensity activity.
+2.⁠ ⁠Parameter: Step Count
+   - Relationship: Step count reflects functional capacity and rehabilitation engagement.
+   - GREEN:
+     - ≥ 6,500 steps/day
+     - Increasing step trend over the week
+   - NOT IDEAL:
+     - 3,000–6,500 steps/day
+   - HIGH RISK:
+     - Persistently low activity or failure to increase steps during rehab
+   - RED:
+     - ~300 steps/day
+     - Sudden decrease > 50% from baseline → urgent alert
+     - Sudden increase > 50% baseline (e.g. >12,000/day) → potential cardiac burden
+   - Interpretation:
+     - Low or decreasing steps: deconditioning, fatigue, or clinical deterioration
    - Clinical action:
-     - If sudden step-count drop > 50%, assess for fatigue, intercurrent illness, decompensation, or device/data issues.
-     - If step count remains persistently low, recommend physiotherapist or rehabilitation intervention where appropriate.
+     - Persistent low steps → consider physiotherapy or rehab intervention
 
- 3.⁠ ⁠Parameter: Sedentary Time
-   - Relationship: Prolonged sedentary behaviour is associated with adverse cardiovascular and metabolic risk.
-   - Scope: Apply to adults only; use cardiac-specific thresholds for CAD / HF / post-MI patients and general thresholds for the general population.
-   - Cardiac patients:
-     - GREEN: < 6 hours/day.
-     - AMBER: 6–8 hours/day.
-     - HIGH RISK: > 8 hours/day.
-     - RED: 20–22 hours/day.
-   - General population:
-     - GREEN: < 6 hours/day.
-     - AMBER: 6–10 hours/day.
-     - HIGH RISK: > 10 hours/day.
-     - RED: 20–22 hours/day.
+3.⁠ ⁠Parameter: Sedentary Time
+   - Relationship: Prolonged sedentary time is associated with worse cardiovascular outcomes.
+   - GREEN:
+     - < 6 hours/day
+   - NOT IDEAL:
+     - 6–8 hours/day
+   - HIGH RISK:
+     - ≥ 8 hours/day
+   - RED:
+     - 20–22 hours/day
+   - Interpretation:
+     - High sedentary time: reduced functional capacity and increased cardiometabolic risk
    - Clinical action:
-     - If sedentary time is very high, advise reducing uninterrupted sitting time and increasing light walking or standing breaks where clinically appropriate.
-     - If mean_daily_steps < 5000 AND sedentary_minutes_per_day > 540, recommend physiotherapist or rehabilitation intervention.
+     - Encourage reduction of prolonged sitting and increase light activity
 
- 4.⁠ ⁠Parameter: Physical Activity (Moderate–Vigorous)
-   - Scope: Adults only.
-   - Green threshold:
-     - ≥ 150 min/week of moderate-intensity physical activity, or equivalent vigorous activity.
-   - Amber threshold:
-     - 1–150 min/week.
-   - High risk:
-     - Very low activity (0–60 min/week).
-   - Red:
-     - Sudden excessive high-intensity activity ≥ 300 min/week, or activity pattern inconsistent with current clinical status.
-   - Additional walking-based active time:
-     - GREEN: approximately 12 hours/day of active waking time.
-     - HIGH RISK: < 6 hours/day.
-     - RED: 0 minutes.
+4.⁠ ⁠Parameter: Physical Activity (Moderate–Vigorous)
+   - Relationship: Physical activity is a key determinant of recovery and long-term cardiovascular outcomes.
+   - GREEN:
+     - ≥ 150 min/week (meets guideline recommendations)
+   - AMBER:
+     - 1–150 min/week
+   - HIGH RISK:
+     - Very low activity (0–60 min/week)
+   - RED:
+     - Sudden excessive high-intensity activity ≥ 300 min/week
+   - Interpretation:
+     - Low activity: inadequate rehabilitation progress
+     - Excessive sudden increase: potential cardiac stress
    - Clinical action:
-     - Provide disease-context recommendations for activity, steps, and sedentary time.
-     - Use a cautious progression plan for cardiac patients.
-     - Escalate if activity changes are abrupt or symptomatic.
-
- 5.⁠ ⁠Emergency Red Flags
-   - Any of the following should trigger RED:
-     - HR < 40 bpm or > 160 bpm.
-     - Sudden change in HR ≥ 30 bpm within minutes.
-     - HR > 120 bpm during mild activity.
-     - Step count approximately 300/day.
-     - Sudden step-count decrease > 50% from baseline.
-     - Sedentary time > 20–22 hours/day.
-     - Sudden excessive activity ≥ 300 min/week.
-   - If RED, recommend immediate clinical attention and human-in-the-loop review.
-
- 6.⁠ ⁠Combined Risk Patterns
-   - Heart failure / acute illness pattern:
-     - HR increasing + step count decreasing + sedentary time increasing.
-   - Arrhythmia suspicion pattern:
-     - Rapid HR change + sudden drop in steps or activity.
-   - Persistent inactivity pattern:
-     - mean_daily_steps < 5000 AND sedentary_minutes_per_day > 540.
-   - If ≥ 2 HIGH RISK findings or any RED finding are present, classify overall risk as RED.
-
- 7.⁠ ⁠Longitudinal Behaviour Pattern
-   - If there is no improvement in steps over repeated monitoring and activity remains low, record an escalating risk category.
-   - If two parameters improve over time, record meaningful positive change.
-   - Use trend information to support interpretation, not just single-point thresholds.
-
- 8.⁠ ⁠Overall Risk Logic
-   - Evaluate each parameter independently:
-     - Heart rate
-     - Step count
-     - Sedentary time
-     - Physical activity
-   - Then evaluate combined patterns.
-   - Rules:
-     - Any RED finding or ≥ 2 HIGH RISK findings = overall RED.
-     - All parameters GREEN = overall GREEN.
-     - Otherwise = AMBER.
-
- 9.⁠ ⁠Clinical Interpretation Layer
-   - For each abnormal parameter, provide:
-     - Clinical meaning
-     - Risk implication
-     - Potential complications
-   - Examples:
-     - Deconditioning
-     - Worsening heart failure
-     - Arrhythmia suspicion
-     - Reduced functional capacity
-     - Increased cardiovascular event risk
-
-10.⁠ ⁠Recommendations Layer
-   - Provide:
-     - Guideline-based activity advice
-     - Follow-up interval
-     - Behavioural suggestions
-     - Human-in-the-loop escalation when needed
-   - Cardiac patients:
-     - Use a conservative heart-rate target where clinically appropriate.
-     - Consider specialist referral if persistent tachycardia, rising RHR trend, marked functional decline, or lack of exercise is present.
-     - Highlight that HR > 70 bpm may increase risk of MI and HF hospitalisation in relevant cardiac populations.
-   - General population:
-     - Encourage movement towards green thresholds and reduction of sedentary time.
-     - Base advice on the green value ranges.
-
-11.⁠ ⁠Reporting Principles
-   - Output must be designed for clinicians.
-   - Use medical terminology where appropriate.
-   - Avoid alarming or inappropriate wording.
-   - Structure output as:
-     raw data -> key findings -> interpretation -> highlights
-   - Emphasise only clinically relevant deviations.
-   - Make the most important insights readable within 10 seconds.
-
-12.⁠ ⁠Population Scope
-   - Applies to:
-     - Adults
-     - Ambulatory individuals
-     - Cardiac patients in rehabilitation or chronic disease management
-   - Does not apply to:
-     - Pregnancy
-     - Paediatric populations
-
-13.⁠ ⁠Evidence Requirement
-   - Every threshold must have a reference.
-   - Evidence should primarily come from:
-     - AHA
-     - ACC
-     - ESC
-     - WHO
-     - Cardiac rehabilitation literature
-
-Trigger RED (urgent escalation) if ANY of:
-•⁠  ⁠Sustained HR > 130 bpm at rest (>30 min)
-•⁠  ⁠New or worsening symptoms (if available)
-•⁠  ⁠Rapid deterioration in activity + rising HR
-•⁠  ⁠Concerning physiological instability pattern--------------------------------------------------
-EXTENDED GUARDRAILS
---------------------------------------------------
-
-[1] AF / TACHYARRHYTHMIA DETECTION
-IF:
-•⁠  ⁠Known history of atrial fibrillation
-AND
-•⁠  ⁠HR spike >130 bpm, especially overnight or at rest
-THEN:
-•⁠  ⁠Flag: "Possible AF episode"
-•⁠  ⁠Risk: AMBER (upgrade to RED if prolonged or symptomatic)
-•⁠  ⁠Action: Recommend rhythm review / ECG confirmation
+     - Adjust activity plan according to rehab phase
 
 --------------------------------------------------
 
-[2] NON-WEAR / DATA QUALITY GUARDRAIL
-IF:
-•⁠  ⁠Non-wear time > 180 minutes/day (average)
-OR
-•⁠  ⁠Any single day > 300 minutes
-THEN:
-•⁠  ⁠Flag: "Data reliability concern"
-•⁠  ⁠Risk: AMBER
-•⁠  ⁠Action: Interpret trends cautiously; prompt adherence improvement
+🚨 RED FLAGS (Immediate Attention)
+ANY of the following → classify as RED:
+•⁠  ⁠HR < 40 bpm or > 160 bpm
+•⁠  ⁠RHR rising across the week
+•⁠  ⁠Step count < 3000/day
+•⁠  ⁠Sudden step increase > 50% baseline
+•⁠  ⁠Sudden step decrease > 50% baseline
+•⁠  ⁠Sedentary time > 20–22 hours/day
 
 --------------------------------------------------
 
-[3] RISING RESTING HEART RATE TREND
-IF:
-•⁠  ⁠Resting HR increases ≥5 bpm across the week
-OR
-•⁠  ⁠≥3 consecutive days of rising RHR
-THEN:
-•⁠  ⁠Flag: "Physiological deterioration signal"
-•⁠  ⁠Risk: AMBER → RED (if combined with low activity or symptoms)
-•⁠  ⁠Action: Consider clinical review (infection, deconditioning, HF risk)
+⚠️ AMBER FLAGS
+•⁠  ⁠One overnight abnormal HR episode
+•⁠  ⁠Significant non-wear time (device data gap)
 
 --------------------------------------------------
 
-[4] REHABILITATION PROGRESSION / ADHERENCE
-IF:
-•⁠  ⁠Week 1–2 AND low activity (steps <3000/day)
-OR
-•⁠  ⁠Missed ≥1 physiotherapy session
-THEN:
-•⁠  ⁠Flag: "Poor rehab engagement"
-•⁠  ⁠Risk: AMBER
-•⁠  ⁠Action: Behavioural + clinical follow-up
-
-IF:
-•⁠  ⁠Later phase (week ≥4) AND no upward trend in steps/activity
-THEN:
-•⁠  ⁠Flag: "Failure to progress"
-•⁠  ⁠Risk: AMBER
+⚠️ Combined Risk Patterns (Critical)
+1.⁠ ⁠Heart Failure / Acute Illness Pattern:
+   - HR increasing + Step count decreasing + Sedentary time increasing
+2.⁠ ⁠Arrhythmia Suspicion:
+   - Rapid HR change + sudden drop in step count or activity
+3.⁠ ⁠AF Detection:
+   - HR > 100 bpm AND history of paroxysmal atrial fibrillation
 
 --------------------------------------------------
 
-[5] PROTECTIVE / REASSURING PATTERN
-IF:
-•⁠  ⁠Stable or improving steps
-AND
-•⁠  ⁠Stable or decreasing resting HR
-AND
-•⁠  ⁠Good wear compliance
-THEN:
-•⁠  ⁠Flag: "Expected recovery trajectory"
-•⁠  ⁠Risk: GREEN
-•⁠  ⁠Action: Continue current plan
+🧾 Clinical Interpretation Layer
+For each abnormal parameter:
+•⁠  ⁠Provide:
+  - Clinical meaning (e.g. deconditioning, heart failure, arrhythmia)
+  - Whether the patient meets weekly progression targets based on rehab phase
+  - Identification of non-wear time or lack of physiotherapy engagement
+•⁠  ⁠Predict:
+  - Potential complications (e.g. HF deterioration, hospitalisation, arrhythmia events)
+
+--------------------------------------------------
+
+💡 Recommendations Layer
+•⁠  ⁠Provide:
+  - Guideline-based activity advice
+  - Follow-up interval
+  - Behavioural suggestions
+•⁠  ⁠Cardiac patients:
+  - Target RHR: 55–60 bpm
+  - HR > 70 bpm → increased risk of:
+    - Myocardial infarction
+    - Heart failure hospitalisation
+•⁠  ⁠Escalation:
+  - Recommend clinical review when risk is elevated
+  - Recommend specialist referral when needed
+  - Recommend physiotherapist or rehabilitation intervention if lack of exercise
+
+--------------------------------------------------
+
+❗ Final Principles
+•⁠  ⁠All values must be:
+  - Referenced
+  - Contextualised
+•⁠  ⁠Avoid:
+  - Unsupported scoring systems
+•⁠  ⁠Prioritise:
+  - Guideline-aligned interpretation
+  - Clear, concise, clinician-facing output

@@ -12,6 +12,7 @@ from processor import (
     build_fhir_bundle,
     generate_clinical_snapshot,
     load_all_patients,
+    validate_patient_metrics,
 )
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -23,7 +24,7 @@ CORS(app)
 
 def _parse_snapshot_sections(text: str) -> dict:
     """Parse snapshot text into a dict of {SECTION_NAME: content}."""
-    headers = ['PATIENT', 'MONITORING PERIOD', 'KEY FINDINGS', 'CLINICAL INTERPRETATION', 'RECOMMENDATION']
+    headers = ['PATIENT', 'MONITORING PERIOD', 'KEY FINDINGS', 'SUMMARY', 'CLINICAL INTERPRETATION', 'RECOMMENDATION']
     pattern = re.compile(
         r'^(' + '|'.join(re.escape(h) for h in headers) + r')\s*\|?\s*',
         re.IGNORECASE | re.MULTILINE
@@ -109,8 +110,36 @@ def render_pipeline_output(patient: dict, snapshot_text: str, bundle=None) -> st
     )
     metrics_html += '</div>'
 
+    # --- data flags banner ---
+    flags = patient.get('_flags', [])
+    flags_html = ''
+    if flags:
+        items = ''.join(
+            f'<li style="margin-bottom:4px;">'
+            f'<strong>{f["field"].replace("_", " ").title()}</strong>: '
+            f'recorded value {f["original"]} exceeds plausible maximum — clamped to {f["clamped"]}'
+            f'</li>'
+            for f in flags
+        )
+        flags_html = (
+            f'<div style="background:#fffbeb;border:1px solid #f6e05e;border-radius:6px;'
+            f'padding:10px 16px;margin-top:4px;">'
+            f'<span style="font-weight:600;color:#744210;">⚠ Data flags</span>'
+            f'<ul style="margin:6px 0 0 1.2em;padding:0;color:#744210;font-size:0.9em;">{items}</ul>'
+            f'</div>'
+        )
+
     # --- clinical snapshot sections ---
     sections = _parse_snapshot_sections(snapshot_text)
+
+    summary_text = sections.get('SUMMARY', '')
+    summary_html = (
+        f'<div style="background:#ebf8ff;border-left:4px solid #3182ce;border-radius:6px;'
+        f'padding:12px 16px;margin-bottom:16px;font-size:1em;color:#1a365d;font-weight:500;">'
+        f'{summary_text}'
+        f'</div>'
+    ) if summary_text else ''
+
     section_config = {
         'KEY FINDINGS':            ('📊', 'Key Findings'),
         'CLINICAL INTERPRETATION': ('🔍', 'Clinical Interpretation'),
@@ -285,6 +314,10 @@ def render_pipeline_output(patient: dict, snapshot_text: str, bundle=None) -> st
                 <span>Clinical Context</span>
                 <span>{patient.get("clinical_context", "—")}</span>
             </div>
+            <div class="patient-field">
+                <span>Context Notes</span>
+                <span>{patient.get("context_notes", "—")}</span>
+            </div>
         </div>
     </div>
 
@@ -292,11 +325,13 @@ def render_pipeline_output(patient: dict, snapshot_text: str, bundle=None) -> st
     <div class="card">
         <div class="section-title">📈 Activity Metrics</div>
         {metrics_html}
+        {flags_html}
     </div>
 
     <!-- Clinical snapshot -->
     <div class="card">
         <div class="section-title" style="margin-bottom:16px;">🩺 Clinical Snapshot</div>
+        {summary_html}
         {sections_html}
     </div>
 
@@ -434,6 +469,7 @@ def render_tabbed_dashboard(results: list) -> str:
 def index():
     results = []
     for patient in load_all_patients():
+        patient  = validate_patient_metrics(patient)
         bundle   = build_fhir_bundle(patient)
         snapshot = generate_clinical_snapshot(patient, bundle)
         results.append({'patient': patient, 'bundle': bundle, 'snapshot': snapshot})
