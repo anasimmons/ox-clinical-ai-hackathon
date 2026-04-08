@@ -21,6 +21,9 @@ BASE_DIR = Path(__file__).resolve().parent
 app = Flask(__name__)
 CORS(app)
 
+# Pre-computed pipeline results — populated at startup
+_CACHED_RESULTS = []
+
 
 def _parse_snapshot_sections(text: str) -> dict:
     """Parse snapshot text into a dict of {SECTION_NAME: content}."""
@@ -162,7 +165,7 @@ def render_pipeline_output(patient: dict, snapshot_text: str, bundle=None) -> st
     fhir_badge = ''
     fhir_section_html = ''
     if bundle is not None:
-        entries = bundle.entry or []
+        entries = [e for e in (bundle.entry or []) if hasattr(e.resource, 'code') and e.resource.code is not None]
         obs_count = len(entries)
         fhir_badge = (
             f'<span style="background:#c6f6d5;color:#276749;padding:4px 12px;border-radius:12px;'
@@ -171,6 +174,8 @@ def render_pipeline_output(patient: dict, snapshot_text: str, bundle=None) -> st
         rows = ''
         for entry in entries:
             obs = entry.resource
+            if not hasattr(obs, 'code') or obs.code is None:
+                continue
             label = obs.code.text or '—'
             loinc = obs.code.coding[0].code if obs.code.coding else '—'
             vq    = obs.valueQuantity
@@ -465,15 +470,23 @@ def render_tabbed_dashboard(results: list) -> str:
 </html>'''
 
 
+def _process_patient(patient):
+    patient  = validate_patient_metrics(patient)
+    bundle   = build_fhir_bundle(patient)
+    snapshot = generate_clinical_snapshot(patient, bundle)
+    return {'patient': patient, 'bundle': bundle, 'snapshot': snapshot}
+
+
+def _warm_cache():
+    global _CACHED_RESULTS
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor() as executor:
+        _CACHED_RESULTS = list(executor.map(_process_patient, load_all_patients()))
+
+
 @app.route('/', methods=['GET'])
 def index():
-    results = []
-    for patient in load_all_patients():
-        patient  = validate_patient_metrics(patient)
-        bundle   = build_fhir_bundle(patient)
-        snapshot = generate_clinical_snapshot(patient, bundle)
-        results.append({'patient': patient, 'bundle': bundle, 'snapshot': snapshot})
-    return render_tabbed_dashboard(results)
+    return render_tabbed_dashboard(_CACHED_RESULTS)
 
 
 @app.route('/health', methods=['GET'])
@@ -494,4 +507,7 @@ def generate_snapshot_endpoint():
 
 
 if __name__ == '__main__':
+    print('Pre-computing pipeline results...')
+    _warm_cache()
+    print('Ready.')
     app.run(debug=False, host='0.0.0.0', port=5001)

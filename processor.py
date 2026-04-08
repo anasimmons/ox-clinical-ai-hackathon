@@ -75,67 +75,26 @@ def validate_patient_metrics(patient: dict) -> dict:
 
 def build_fhir_bundle(patient: dict) -> Bundle:
     """
-    Deterministically build a FHIR R4 Bundle from a patient metrics dict.
-    Returns a fhir.resources Bundle object (no LLM involved).
+    Use an LLM to build a FHIR R4 Bundle from a patient metrics dict.
     Expects patient dict to have already been passed through validate_patient_metrics.
+    Validation flags are included in the prompt so the model is aware of clamped values.
     """
-    from fhir.resources.bundle import Bundle, BundleEntry
-    from fhir.resources.observation import Observation
-    from fhir.resources.reference import Reference
-    from fhir.resources.period import Period
+    fhir_prompt = FHIR_SYSTEM
+    if patient.get("_flags"):
+        flags_text = "\n".join(f["message"] for f in patient["_flags"])
+        fhir_prompt += f"\n\nData quality notes (values were clamped before submission):\n{flags_text}"
 
-    subject_ref = Reference(**{"reference": f"Patient/{patient['subject_id']}"})
-    period = Period(**{
-        "start": patient.get("recording_start"),
-        "end":   patient.get("recording_end"),
-    })
-
-    CATEGORY = [{
-        "coding": [{
-            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
-            "code":   "activity",
-            "display": "Activity",
-        }]
-    }]
-
-    # (display, loinc_code, value, unit, ucum_unit)
-    metrics = [
-        ("Mean Daily Steps",             "41950-7", patient.get("mean_daily_steps"),               "steps/day",  "{steps}/d"),
-        ("Total Active Minutes",          "55423-8", patient.get("total_active_minutes"),            "min",         "min"),
-        ("Mean Heart Rate",               "8867-4",  patient.get("mean_heart_rate_bpm"),             "bpm",         "/min"),
-        ("Resting Heart Rate",            "8867-4",  patient.get("resting_hr_bpm"),                  "bpm",         "/min"),
-        ("Mean Daily Sedentary Minutes",  "82291-6", patient.get("mean_daily_sedentary_minutes"),    "min/day",    "min/d"),
-        ("Days Meeting Activity Target",  "68516-4", patient.get("days_meeting_150min_activity_target"), "days", "d"),
-    ]
-
-    entries = []
-    for display, loinc, value, unit_display, ucum in metrics:
-        if value is None:
-            continue
-        obs = Observation(**{
-            "status": "final",
-            "category": CATEGORY,
-            "code": {
-                "coding": [{"system": "http://loinc.org", "code": loinc, "display": display}],
-                "text": display,
-            },
-            "subject": {"reference": subject_ref.reference},
-            "effectivePeriod": {"start": period.start, "end": period.end},
-            "valueQuantity": {
-                "value": float(value),
-                "unit":  unit_display,
-                "system": "http://unitsofmeasure.org",
-                "code":   ucum,
-            },
-        })
-        entries.append(BundleEntry(**{
-            "fullUrl": f"urn:uuid:{display.lower().replace(' ', '-')}",
-            "resource": obs,
-            "request": {"method": "POST", "url": "Observation"},
-        }))
-
-    bundle = Bundle(**{"type": "transaction", "entry": entries})
-    Bundle.model_validate(bundle.model_dump())
+    r = client.chat.completions.create(
+        model='gpt-4o-mini',
+        response_format={'type': 'json_object'},
+        messages=[
+            {'role': 'system', 'content': fhir_prompt},
+            {'role': 'user', 'content': json.dumps(patient)},
+        ],
+        temperature=0.0,
+    )
+    fhir_json = json.loads(r.choices[0].message.content)
+    bundle = Bundle.model_validate(fhir_json)
     return bundle
 
 
@@ -149,6 +108,8 @@ def generate_clinical_snapshot(patient: dict, bundle=None) -> str:
         observations = []
         for entry in (bundle.entry or []):
             obs = entry.resource
+            if not hasattr(obs, 'code') or obs.code is None:
+                continue
             code = obs.code.text if obs.code else "Unknown"
             vq = obs.valueQuantity
             observations.append({
