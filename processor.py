@@ -28,7 +28,7 @@ CLINICAL_GUIDELINES = (BASE_DIR / 'prompts' / 'clinical_guidelines.txt').read_te
 DEFAULT_PATIENT_FILE = BASE_DIR / 'patients' / 'default_patient.json'
 FHIR_SYSTEM = (BASE_DIR / 'prompts' / 'fhir_system.txt').read_text(encoding='utf-8')
 
-def load_default_patient(filename: str = 'default_patient.json') -> dict:
+def load_default_patient(filename: str = 'PID-20394.json') -> dict:
     path = BASE_DIR / 'patients' / filename
     if not path.exists():
         raise FileNotFoundError(f"Default patient file not found: {path}")

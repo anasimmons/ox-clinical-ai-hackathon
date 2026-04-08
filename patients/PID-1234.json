@@ -1,0 +1,7 @@
+{
+        "subject_id":       "PID-1234",
+        "name":             "Mr John Smith",
+        "dob":              "1995-12-12",
+        "device":           "Axivity AX3",
+        "clinical_context": "Some heart problem"
+    }
