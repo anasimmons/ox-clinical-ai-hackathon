@@ -16,7 +16,7 @@ os.environ['JAVA_HOME'] = '/usr/local/opt/openjdk'
 os.environ['PATH'] = '/usr/local/opt/openjdk/bin:' + os.environ.get('PATH', '')
 
 # Import process_cwa_to_summary from data-processing.py (hyphen prevents normal import)
-_spec = importlib.util.spec_from_file_location("data_processing", BASE_DIR / "data-processing.py")
+_spec = importlib.util.spec_from_file_location("data_processing", BASE_DIR / "data_processing.py")
 _dp = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_dp)
 process_cwa_to_summary = _dp.process_cwa_to_summary
